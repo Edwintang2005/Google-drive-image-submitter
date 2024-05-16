@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <base target="_blank">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Google File Upload</title>
+    <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/css/materialize.min.css">
+    <style>
+      .disclaimer{width: 480px; color:#646464;margin:20px auto;padding:0 16px;text-align:center;font:400 12px Roboto,Helvetica,Arial,sans-serif}.disclaimer a{color:#009688}#credit{display:none}
+    </style>
+  </head>
+
+<form class="main" id="uploaderForm" novalidate="novalidate" style="max-width: 480px;margin: 40px auto;">
+      <div id="forminner">
+        <div class="row">
+          <div class="col s12">
+            <h5 class="center-align teal-text">Submit Questions for Stack</h5>
+            <p class="disclaimer">Submit screenshots of questions and answers, you are allowed to submit multiple files up to 5MB in size. Please ensure that you label everything correctly to make our job easier. - Let us know if any problems occur.</a></p>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <input id="applicantName" type="text" name="applicantName" class="validate" required="" aria-required="true">
+            <label for="name">Subject</label>
+          </div>
+        </div>
+        <div class="row">
+          <div class="input-field col s12">
+            <input id="applicantEmail" type="email" name="applicantEmail" class="validate" required="" aria-required="true">
+            <label for="email">School + Question Number</label>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="file-field input-field col s12">
+            <div class="btn">
+              <span>File</span>
+              <input type="file" name="filesToUpload" id="filesToUpload" multiple>
+            </div>
+            <div class="file-path-wrapper">
+              <input class="file-path validate" type="text" placeholder="Select a file on your computer">
+            </div>
+          </div>
+        </div>
+
+        <div class="row">
+          <div class="input-field col s6">
+            <button class="waves-effect waves-light btn submit-btn" type="submit" onclick="uploadFiles(); return false;">Submit</button>
+          </div>   
+        </div>
+        <div class="row">
+          <div class="input-field col s12" id = "progress">
+          </div>
+        </div>
+      </div>
+      <div id="success" style="display:none">
+        <h5 class="left-align teal-text">File Uploaded</h5>
+        <p>Your file has been successfully uploaded.</p>
+        <p>Thanks for your submission!</p>    
+      </div>
+      </div>
+        <div class="row">
+          <div class="input-field col s12" id = "progress">
+          </div>
+        </div>
+      </div>
+      <div id="success" style="display:none">
+        <h5 class="left-align teal-text">File Uploaded</h5>
+        <p>Your file has been successfully uploaded.</p>
+        <p>Thanks for your submission!</p>    
+      </div>
+    </form>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/2.2.0/jquery.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.5/js/materialize.min.js"></script>
+
+  <br>
+  <div id="output"></div>
+  <script>
+    var rootFolderId = '1vlgzpnz3xTuBEOjXV4PNWiLQNFAYguiN'; // Replace this id with the id of whichever folder you want to submit to
+		var numUploads = {};
+		numUploads.done = 0;
+		numUploads.total = 0;
+		// Upload the files into a folder in drive
+		// This is set to send them all to one folder (specificed in the .gs file)
+		function uploadFiles() {
+			var allFiles = document.getElementById('filesToUpload').files;
+			var applicantName = document.getElementById('applicantName').value;
+			if (!applicantName) {
+				window.alert('Missing Subject!');
+			}
+			var applicantEmail = document.getElementById('applicantEmail').value;
+			if (!applicantEmail) {
+				window.alert('Missing School/Question + Ans!');
+			}
+			var folderName = applicantName + ' ' + applicantEmail;
+			if (allFiles.length == 0) {
+				window.alert('No file selected!');
+			} else {
+				numUploads.total = allFiles.length;
+				google.script.run.withSuccessHandler(function(r) {
+					// send files after the folder is created...
+					for (var i = 0; i < allFiles.length; i++) {
+						// Send each file at a time
+						uploadFile(allFiles[i], r.folderId);
+					}
+				}).createFolder(rootFolderId, folderName);
+			}
+		}
+
+		function uploadFile(file, folderId) {
+			var reader = new FileReader();
+			reader.onload = function(e) {
+				var content = reader.result;
+				document.getElementById('output').innerHTML = 'uploading '
+						+ file.name + '...';
+				//window.alert('uploading ' + file.name + '...');				
+				google.script.run.withSuccessHandler(onFileUploaded)
+						.uploadFile(content, file.name, folderId);
+			}
+			reader.readAsDataURL(file);
+		}
+
+		function onFileUploaded(r) {
+			numUploads.done++;
+			document.getElementById('output').innerHTML = 'uploaded '
+					+ r.fileName + ' (' + numUploads.done + '/'
+					+ numUploads.total + ' files).';
+			if (numUploads.done == numUploads.total) {
+				document.getElementById('output').innerHTML = 'All of the '
+						+ numUploads.total + ' files are uploaded';
+        $('#forminner').hide();
+        $('#success').show();
+				numUploads.done = 0;
+			}
+		}
+
+  </script>
+</body>
+</html>
